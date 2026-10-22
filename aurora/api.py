@@ -103,4 +103,18 @@ def create_app(model: BaseLlm | None = None) -> FastAPI:
     async def listar_eventos(session_id: str, request: Request) -> list[dict]:
         return await conversation(request).events(session_id)
 
+    async def _require_apartment(numero: str) -> None:
+        if not await asyncio.to_thread(storage.apartment_exists, numero):
+            raise HTTPException(status_code=404, detail="Apartamento inexistente.")
+
+    @app.get("/apartamentos/{numero}/reservas")
+    async def reservas_do_apartamento(numero: str) -> list[dict]:
+        await _require_apartment(numero)
+        return await asyncio.to_thread(storage.list_reservations, numero)
+
+    @app.get("/apartamentos/{numero}/visitantes")
+    async def visitantes_do_apartamento(numero: str) -> list[dict]:
+        await _require_apartment(numero)
+        return await asyncio.to_thread(storage.list_visitors, numero)
+
     return app
