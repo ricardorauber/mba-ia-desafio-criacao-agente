@@ -19,13 +19,13 @@ Keep reservations and visitor authorizations in a SQLite database whose schema i
 - R9: Every connection SHALL use `timeout=30` and WAL journal mode, and be opened per operation, so concurrent callers in threads never get "database is locked" under normal load.
 
 ## Acceptance criteria
-- [ ] AC1: After `uv run aurora-restaurar` on an empty `var/`, `list_reservations("101")` returns exactly `RSV-1377` (quadra, 2030-03-09) and `list_visitors("302")` returns exactly Marina Duarte (2030-03-16). (R1, R4, R5, R8)
-- [ ] AC2: A second insert of an active reservation for the same area and date fails at the database level even when done with raw SQL. (R3)
-- [ ] AC3: 20 threads calling `create_reservation` for the same area and date result in exactly one success and 19 "taken" results, none raising. (R6, R9)
-- [ ] AC4: Codes created never match a seed code nor any previously issued code, including cancelled ones and after a restore. (R5, R6)
-- [ ] AC5: `cancel_reservation("101", "salao-de-festas", "2030-03-16")` returns not-cancelled and RSV-4821 stays active. (R7)
-- [ ] AC6: After a cancellation, the same area and date can be reserved again. (R3, R7)
-- [ ] AC7: Restore keeps `sessoes` and `codigos_reserva` rows. (R5)
+- [x] AC1: After `uv run aurora-restaurar` on an empty `var/`, `list_reservations("101")` returns exactly `RSV-1377` (quadra, 2030-03-09) and `list_visitors("302")` returns exactly Marina Duarte (2030-03-16). (R1, R4, R5, R8)
+- [x] AC2: A second insert of an active reservation for the same area and date fails at the database level even when done with raw SQL. (R3)
+- [x] AC3: 20 threads calling `create_reservation` for the same area and date result in exactly one success and 19 "taken" results, none raising. (R6, R9)
+- [x] AC4: Codes created never match a seed code nor any previously issued code, including cancelled ones and after a restore. (R5, R6)
+- [x] AC5: `cancel_reservation("101", "salao-de-festas", "2030-03-16")` returns not-cancelled and RSV-4821 stays active. (R7)
+- [x] AC6: After a cancellation, the same area and date can be reserved again. (R3, R7)
+- [x] AC7: Restore keeps `sessoes` and `codigos_reserva` rows. (R5)
 
 ## Unit tests
 - T1: `tests/test_storage.py::test_seed_matches_dados` (AC1).
