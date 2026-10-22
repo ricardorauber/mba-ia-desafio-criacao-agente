@@ -21,13 +21,13 @@ Expose reservations and visitors to the agents only through ADK tools that take 
 - R11: No tool output SHALL contain another apartment's number, reservation codes or visitor names.
 
 ## Acceptance criteria
-- [ ] AC1: With a session of apartment 101, every tool reads/writes rows of 101 only, and `inspect.signature` of every tool has no apartment-like parameter. (R1, R11)
-- [ ] AC2: "Salão de Festas", "salao de festas" and `salao-de-festas` resolve to the same id; an unknown area returns the error listing the three areas. (R2, R3)
-- [ ] AC3: `verificar_disponibilidade("salao-de-festas", "2030-03-16")` returns `disponivel: false` and its JSON has no `302` nor `RSV-4821`. (R5, R11)
-- [ ] AC4: `reservar_area` on `quadra` writes immediately with no confirmation request; on `salao-de-festas` it requests confirmation with area and date in the payload and writes nothing until approved; rejection writes nothing. (R6)
-- [ ] AC5: `reservar_area("salao-de-festas", "2030-03-16")` returns `indisponivel` without requesting confirmation and without leaking the holder. (R6, R11)
-- [ ] AC6: `cancelar_reserva("salao-de-festas", "2030-03-16")` from 101 returns `nao_encontrada` and RSV-4821 stays. (R7)
-- [ ] AC7: `autorizar_visitante` always requests confirmation with name and date in the payload, and writes only after approval. (R9)
+- [x] AC1: With a session of apartment 101, every tool reads/writes rows of 101 only, and `inspect.signature` of every tool has no apartment-like parameter. (R1, R11)
+- [x] AC2: "Salão de Festas", "salao de festas" and `salao-de-festas` resolve to the same id; an unknown area returns the error listing the three areas. (R2, R3)
+- [x] AC3: `verificar_disponibilidade("salao-de-festas", "2030-03-16")` returns `disponivel: false` and its JSON has no `302` nor `RSV-4821`. (R5, R11)
+- [x] AC4: `reservar_area` on `quadra` writes immediately with no confirmation request; on `salao-de-festas` it requests confirmation with area and date in the payload and writes nothing until approved; rejection writes nothing. (R6)
+- [x] AC5: `reservar_area("salao-de-festas", "2030-03-16")` returns `indisponivel` without requesting confirmation and without leaking the holder. (R6, R11)
+- [x] AC6: `cancelar_reserva("salao-de-festas", "2030-03-16")` from 101 returns `nao_encontrada` and RSV-4821 stays. (R7)
+- [x] AC7: `autorizar_visitante` always requests confirmation with name and date in the payload, and writes only after approval. (R9)
 
 ## Unit tests
 - T1: `tests/test_tools.py` drives each tool through a real ADK `Runner` with the scripted fake LLM of `tests/fakes.py` and an in-memory session (AC1-AC7), answering confirmations with an `adk_request_confirmation` FunctionResponse.
