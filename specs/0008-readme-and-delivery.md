@@ -14,10 +14,10 @@ Replace the challenge statement with the delivery README and prove the whole eva
 - R4: The default model in `.env.example` comment / spec 0004 SHALL be one that exists in the Gemini API at delivery time and fits the free-tier limits for a few dozen calls; if `gemini-3.5-flash` is not available, the default changes and ADR 0003 is updated.
 
 ## Acceptance criteria
-- [ ] AC1: The README has the three sections and no leftover of the challenge statement. (R1)
-- [ ] AC2: A script check confirms each path and symbol cited in **Garantias** exists. (R2)
-- [ ] AC3: A real run of the flow (restore → API → steps 2-12 → restart → steps 13-14) prints only PASS. (R3, R4)
-- [ ] AC4: `git ls-files` shows no `.env` and no key; `git diff be87e1d -- dados` is empty; `uv.lock` pins `google-adk==2.12.0`. (Delivery)
+- [x] AC1: The README has the three sections and no leftover of the challenge statement. (R1)
+- [x] AC2: A script check confirms each path and symbol cited in **Garantias** exists. (R2)
+- [ ] AC3: A real run of the flow (restore → API → steps 2-12 → restart → steps 13-14) prints only PASS. (R3, R4) — not run: no Gemini key available (ADR 0008).
+- [x] AC4: `git ls-files` shows no `.env` and no key; `git diff be87e1d -- dados` is empty; `uv.lock` pins `google-adk==2.12.0`. (Delivery)
 
 ## Unit tests
 - T1: `tests/test_readme.py::test_guarantee_references_exist` parses the backticked paths and `path::symbol` references of **Garantias** and checks they exist (AC2).
