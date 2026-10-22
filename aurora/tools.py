@@ -20,6 +20,10 @@ from aurora import storage
 MAX_VISITOR_NAME = 80
 
 
+def _text(value: object) -> str:
+    return "" if value is None else str(value)
+
+
 def _apartment(tool_context: ToolContext) -> str:
     return tool_context.user_id
 
@@ -31,7 +35,7 @@ def _normalize(text: str) -> str:
 
 
 def _resolve_area(area: str, areas: list[dict]) -> dict | None:
-    key = _normalize(area or "")
+    key = _normalize(_text(area))
     if not key:
         return None
     for item in areas:
@@ -46,12 +50,13 @@ def _resolve_area(area: str, areas: list[dict]) -> dict | None:
 
 
 def _parse_date(data: str) -> str | None:
+    raw = _text(data).strip()
     try:
-        parsed = date.fromisoformat((data or "").strip())
+        parsed = date.fromisoformat(raw)
     except ValueError:
         return None
     text = parsed.isoformat()
-    return text if text == (data or "").strip() else None
+    return text if text == raw else None
 
 
 def _area_error(areas: list[dict]) -> dict:
@@ -218,7 +223,7 @@ async def autorizar_visitante(nome: str, data: str, tool_context: ToolContext) -
         nome: nome completo do visitante.
         data: data da visita no formato AAAA-MM-DD.
     """
-    name = (nome or "").strip()
+    name = _text(nome).strip()
     if not name or len(name) > MAX_VISITOR_NAME:
         return {
             "status": "erro",

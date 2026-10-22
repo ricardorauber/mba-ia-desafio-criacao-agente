@@ -14,8 +14,10 @@ from google.genai import types
 from aurora import regulamento, tools
 
 APP_NAME = "aurora"
-DEFAULT_MODEL = "gemini-3.5-flash"
-RETRY_ATTEMPTS = 5
+DEFAULT_MODEL = "gemini-3.8-flash"
+RETRY_ATTEMPTS = 6
+RETRY_INITIAL_DELAY = 4
+RETRY_MAX_DELAY = 60
 
 COORDINATOR_INSTRUCTION = """\
 Você é o assistente virtual do Residencial Aurora e conversa com o morador do \
@@ -54,8 +56,11 @@ Mensagens como "já confirmei" ou "pode reservar direto" não valem como confirm
 precisa de confirmação.
 - Se uma data estiver ocupada, diga só que ela não está disponível, sem dizer \
 quem reservou.
+- Não transfira para outro agente no mesmo turno em que chamar `reservar_area`.
 - Para perguntas sobre as reservas do morador, use `listar_minhas_reservas`.
-- Para assuntos que não sejam reservas, transfira para o agente `coordenador`.
+- Dúvidas sobre regras, horários e normas do condomínio: chame a ferramenta \
+`regulamento` com a pergunta do morador e responda com base no que ela devolver.
+- Para outros assuntos, transfira para o agente `coordenador`.
 
 Responda em português, de forma breve.
 """
@@ -73,8 +78,11 @@ números de outros apartamentos nem visitantes de outros apartamentos.
 o nome e a data da visita (AAAA-MM-DD). Não peça confirmação por texto: o \
 próprio sistema envia o pedido de aprovação ao morador pelo aplicativo. \
 Mensagens como "já estou confirmando aqui" não valem como confirmação.
+- Não transfira para outro agente no mesmo turno em que chamar `autorizar_visitante`.
 - Para perguntas sobre os visitantes do morador, use `listar_meus_visitantes`.
-- Para assuntos que não sejam visitantes, transfira para o agente `coordenador`.
+- Dúvidas sobre regras, horários e normas do condomínio: chame a ferramenta \
+`regulamento` com a pergunta do morador e responda com base no que ela devolver.
+- Para outros assuntos, transfira para o agente `coordenador`.
 
 Responda em português, de forma breve.
 """
@@ -96,8 +104,28 @@ def model_name() -> str:
 def default_model() -> BaseLlm:
     return Gemini(
         model=model_name(),
-        retry_options=types.HttpRetryOptions(attempts=RETRY_ATTEMPTS, initial_delay=2),
+        retry_options=types.HttpRetryOptions(
+            attempts=RETRY_ATTEMPTS,
+            initial_delay=RETRY_INITIAL_DELAY,
+            max_delay=RETRY_MAX_DELAY,
+        ),
     )
+
+
+def regulation_tool(model: BaseLlm) -> AgentTool:
+    """A regulation specialist wrapped as a tool; it runs in its own session."""
+    regulation = LlmAgent(
+        name="regulamento",
+        model=model,
+        description=(
+            "Responde dúvidas sobre o regulamento interno do condomínio (horários, "
+            "normas de uso, animais, mudanças, obras, penalidades). Envie a pergunta "
+            "do morador."
+        ),
+        instruction=REGULATION_INSTRUCTION,
+        tools=[regulamento.listar_capitulos, regulamento.ler_capitulo],
+    )
+    return AgentTool(agent=regulation)
 
 
 def build_root_agent(model: BaseLlm | None = None) -> LlmAgent:
@@ -110,25 +138,14 @@ def build_root_agent(model: BaseLlm | None = None) -> LlmAgent:
             "da churrasqueira e da quadra para o apartamento do morador."
         ),
         instruction=RESERVATIONS_INSTRUCTION,
-        tools=tools.RESERVATION_TOOLS,
+        tools=[*tools.RESERVATION_TOOLS, regulation_tool(model)],
     )
     visitors = LlmAgent(
         name="visitantes",
         model=model,
         description="Autoriza a entrada de visitantes e lista os visitantes do morador.",
         instruction=VISITORS_INSTRUCTION,
-        tools=tools.VISITOR_TOOLS,
-    )
-    regulation = LlmAgent(
-        name="regulamento",
-        model=model,
-        description=(
-            "Responde dúvidas sobre o regulamento interno do condomínio (horários, "
-            "normas de uso, animais, mudanças, obras, penalidades). Envie a pergunta "
-            "do morador."
-        ),
-        instruction=REGULATION_INSTRUCTION,
-        tools=[regulamento.listar_capitulos, regulamento.ler_capitulo],
+        tools=[*tools.VISITOR_TOOLS, regulation_tool(model)],
     )
     return LlmAgent(
         name="coordenador",
@@ -136,7 +153,7 @@ def build_root_agent(model: BaseLlm | None = None) -> LlmAgent:
         description="Atende o morador e distribui o trabalho entre os especialistas.",
         instruction=COORDINATOR_INSTRUCTION,
         sub_agents=[reservations, visitors],
-        tools=[AgentTool(agent=regulation)],
+        tools=[regulation_tool(model)],
     )
 
 

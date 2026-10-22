@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import defaultdict
 from typing import Iterable
 
@@ -16,6 +17,15 @@ from aurora import storage
 from aurora.agents import APP_NAME
 
 CONFIRMATION_CALL = "adk_request_confirmation"
+TURN_FAILED = (
+    "Desculpe, não consegui concluir o seu pedido agora. Pode repetir, por favor?"
+)
+ANSWER_REGISTERED = (
+    "Sua resposta foi registrada, mas não consegui concluir o atendimento agora. "
+    "Confira o resultado nas suas reservas ou visitantes."
+)
+
+logger = logging.getLogger(__name__)
 
 
 class SessionNotFound(Exception):
@@ -35,8 +45,13 @@ def pending_confirmations(session: Session) -> list[dict]:
     requested: dict[str, dict] = {}
     answered: set[str] = set()
     for event in session.events:
+        system_calls = set(event.long_running_tool_ids or ())
         for call in event.get_function_calls():
-            if call.name == CONFIRMATION_CALL and call.id and event.author != "user":
+            if (
+                call.name == CONFIRMATION_CALL
+                and call.id in system_calls
+                and event.author != "user"
+            ):
                 requested[call.id] = call.args or {}
         if event.author == "user":
             for response in event.get_function_responses():
@@ -56,6 +71,37 @@ def pending_confirmations(session: Session) -> list[dict]:
             }
         )
     return pending
+
+
+def _describe_outcome(result: dict) -> str | None:
+    status = result.get("status")
+    if status == "reservada":
+        return (
+            f"Reserva confirmada: {result.get('nome_area', result.get('area'))} em "
+            f"{result.get('data')} (código {result.get('codigo')})."
+        )
+    if status == "autorizado":
+        return f"Entrada de {result.get('nome')} liberada para {result.get('data')}."
+    if status in ("indisponivel", "nao_confirmada", "erro"):
+        return result.get("mensagem")
+    return None
+
+
+def confirmation_outcome(session: Session, confirmation_id: str) -> str:
+    """Describes what the confirmed tool recorded after the resident's answer."""
+    original_id = None
+    answered = False
+    outcome = None
+    for event in session.events:
+        for call in event.get_function_calls():
+            if call.id == confirmation_id:
+                original_id = ((call.args or {}).get("originalFunctionCall") or {}).get("id")
+        for response in event.get_function_responses():
+            if event.author == "user" and response.id == confirmation_id:
+                answered = True
+            elif answered and original_id and response.id == original_id:
+                outcome = _describe_outcome(response.response or {})
+    return outcome or ANSWER_REGISTERED
 
 
 def reply_text(events: Iterable[Event]) -> str:
@@ -127,19 +173,30 @@ class Conversation:
             pending_ids = {item["id"] for item in pending_confirmations(session)}
             if confirmation_id not in pending_ids:
                 raise ConfirmationNotPending(confirmation_id)
-            return await self._run_turn(session, message)
+            return await self._run_turn(session, message, confirmation_id)
 
-    async def _run_turn(self, session: Session, message: types.Content) -> dict:
+    async def _run_turn(
+        self,
+        session: Session,
+        message: types.Content,
+        confirmation_id: str | None = None,
+    ) -> dict:
         produced: list[Event] = []
         try:
             async for event in self.runner.run_async(
                 user_id=session.user_id, session_id=session.id, new_message=message
             ):
                 produced.append(event)
-        except genai_errors.APIError as error:
-            raise ModelUnavailable(str(error)) from error
+            text = None
+        except Exception as error:
+            if confirmation_id is None and isinstance(error, genai_errors.APIError):
+                raise ModelUnavailable(str(error)) from error
+            logger.exception("turn failed in session %s", session.id)
+            text = TURN_FAILED
         updated = await self.get_session(session.id)
+        if text is not None and confirmation_id is not None:
+            text = confirmation_outcome(updated, confirmation_id)
         return {
-            "resposta": reply_text(produced),
+            "resposta": reply_text(produced) if text is None else text,
             "confirmacoes_pendentes": pending_confirmations(updated),
         }
