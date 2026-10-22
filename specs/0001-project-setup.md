@@ -23,12 +23,12 @@ Give the Residencial Aurora assistant a pinned, reproducible uv project skeleton
 - R7: No file under `dados/` SHALL differ from the starter commit `be87e1d`.
 
 ## Acceptance criteria
-- [ ] AC1: `uv sync` in a clean clone succeeds and `uv.lock` pins `google-adk` at `2.12.0`. (R1, R2)
-- [ ] AC2: Every entry of `[project].dependencies` and of the dev group uses `==`. (R2)
-- [ ] AC3: `uv run aurora-api` and `uv run aurora-restaurar` exit 0 (stubs). (R3)
-- [ ] AC4: `.env.example` has exactly the variables of R4 with no secret value, and `git check-ignore .env var/x.db` succeeds. (R4, R5)
-- [ ] AC5: `uv run pytest` collects and passes the smoke test. (R6)
-- [ ] AC6: `git diff --stat be87e1d -- dados` is empty. (R7)
+- [x] AC1: `uv sync` in a clean clone succeeds and `uv.lock` pins `google-adk` at `2.12.0`. (R1, R2)
+- [x] AC2: Every entry of `[project].dependencies` and of the dev group uses `==`. (R2)
+- [x] AC3: `uv run aurora-api` and `uv run aurora-restaurar` exit 0 (stubs). (R3)
+- [x] AC4: `.env.example` has exactly the variables of R4 with no secret value, and `git check-ignore .env var/x.db` succeeds. (R4, R5)
+- [x] AC5: `uv run pytest` collects and passes the smoke test. (R6)
+- [x] AC6: `git diff --stat be87e1d -- dados` is empty. (R7)
 
 ## Unit tests
 - T1: `tests/test_smoke.py` imports `aurora` and asserts `google.adk.__version__ == "2.12.0"` (AC1, AC5).
