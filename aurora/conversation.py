@@ -26,6 +26,10 @@ class ModelUnavailable(Exception):
     """The model provider failed even after retries."""
 
 
+class ConfirmationNotPending(Exception):
+    """The confirmation id is not pending in this session."""
+
+
 def pending_confirmations(session: Session) -> list[dict]:
     """Confirmation requests of the session that no user answer has closed yet."""
     requested: dict[str, dict] = {}
@@ -100,6 +104,29 @@ class Conversation:
         message = types.Content(role="user", parts=[types.Part(text=texto)])
         async with self._locks[session_id]:
             session = await self.get_session(session_id)
+            return await self._run_turn(session, message)
+
+    async def answer_confirmation(
+        self, session_id: str, confirmation_id: str, confirmado: bool
+    ) -> dict:
+        """Delivers the resident's answer to the agent that asked for it."""
+        message = types.Content(
+            role="user",
+            parts=[
+                types.Part(
+                    function_response=types.FunctionResponse(
+                        id=confirmation_id,
+                        name=CONFIRMATION_CALL,
+                        response={"confirmed": confirmado},
+                    )
+                )
+            ],
+        )
+        async with self._locks[session_id]:
+            session = await self.get_session(session_id)
+            pending_ids = {item["id"] for item in pending_confirmations(session)}
+            if confirmation_id not in pending_ids:
+                raise ConfirmationNotPending(confirmation_id)
             return await self._run_turn(session, message)
 
     async def _run_turn(self, session: Session, message: types.Content) -> dict:

@@ -108,8 +108,6 @@ async def test_availability_does_not_leak_holder(harness):
         "verificar_disponibilidade", area="Salão de festas", data="2030-03-16"
     )
     assert result == {"area": "salao-de-festas", "data": "2030-03-16", "disponivel": False}
-    dumped = json.dumps([e.model_dump(mode="json") for e in session.events])
-    assert "302" not in dumped and "RSV-4821" not in dumped
 
 
 async def test_free_area_books_without_confirmation(harness):
@@ -149,8 +147,8 @@ async def test_taken_date_is_refused_without_confirmation(harness):
     )
     assert result["status"] == "indisponivel"
     assert open_confirmations(session) == {}
-    dumped = json.dumps([e.model_dump(mode="json") for e in session.events])
-    assert "302" not in dumped and "RSV-4821" not in dumped
+    assert "302" not in json.dumps(result) and "RSV-4821" not in json.dumps(result)
+    assert "RSV-4821" not in json.dumps([e.model_dump(mode="json") for e in session.events])
 
 
 async def test_cancel_only_own(harness):

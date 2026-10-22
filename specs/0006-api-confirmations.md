@@ -15,12 +15,12 @@ Let the resident approve or reject a pending action only through the confirmatio
 - R5: Approving SHALL execute the action once; rejecting SHALL change no data; the outcome SHALL also hold after an API restart between the request and the answer.
 
 ## Acceptance criteria
-- [ ] AC1: With the fake LLM: request a fee reservation, answer `confirmado: false` → `200`, no reservation; request again, answer `true` → `200`, exactly one reservation; resend the same id → `409`, still one. (R2, R3, R5)
-- [ ] AC2: `{"id": "id-inexistente", ...}` → `409` and reservations unchanged. (R2)
-- [ ] AC3: The id of a pending confirmation of session A sent to session B → `409`. (R2)
-- [ ] AC4: Recreating the app between the request and the approval still executes the reservation once. (R5)
-- [ ] AC5: Two sessions (101 and 201) with pending confirmations for the same area and date approved concurrently (`asyncio.gather`) both return `200` and the two apartments sum exactly one reservation. (R3, R5)
-- [ ] AC6: A visitor authorization appears in storage only after approval. (R3, R5)
+- [x] AC1: With the fake LLM: request a fee reservation, answer `confirmado: false` → `200`, no reservation; request again, answer `true` → `200`, exactly one reservation; resend the same id → `409`, still one. (R2, R3, R5)
+- [x] AC2: `{"id": "id-inexistente", ...}` → `409` and reservations unchanged. (R2)
+- [x] AC3: The id of a pending confirmation of session A sent to session B → `409`. (R2)
+- [x] AC4: Recreating the app between the request and the approval still executes the reservation once. (R5)
+- [x] AC5: Two sessions (101 and 201) with pending confirmations for the same area and date approved concurrently (`asyncio.gather`) both return `200` and the two apartments sum exactly one reservation. (R3, R5)
+- [x] AC6: A visitor authorization appears in storage only after approval. (R3, R5)
 
 ## Unit tests
 - T1: `tests/test_confirmations.py` covering AC1-AC6 with `httpx.ASGITransport` and the fake LLM.

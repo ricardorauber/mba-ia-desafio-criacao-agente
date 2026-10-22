@@ -14,7 +14,12 @@ from pydantic import BaseModel
 
 from aurora import config, storage
 from aurora.agents import build_app
-from aurora.conversation import Conversation, ModelUnavailable, SessionNotFound
+from aurora.conversation import (
+    ConfirmationNotPending,
+    Conversation,
+    ModelUnavailable,
+    SessionNotFound,
+)
 
 
 class NovaSessao(BaseModel):
@@ -23,6 +28,11 @@ class NovaSessao(BaseModel):
 
 class NovaMensagem(BaseModel):
     texto: str
+
+
+class RespostaConfirmacao(BaseModel):
+    id: str
+    confirmado: bool
 
 
 class Pendencia(BaseModel):
@@ -60,6 +70,13 @@ def create_app(model: BaseLlm | None = None) -> FastAPI:
             content={"detail": "O assistente está indisponível no momento. Tente novamente."},
         )
 
+    @app.exception_handler(ConfirmationNotPending)
+    async def confirmation_not_pending(request: Request, exc: ConfirmationNotPending):
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Não existe confirmação pendente com esse id nesta sessão."},
+        )
+
     def conversation(request: Request) -> Conversation:
         return request.app.state.conversation
 
@@ -73,6 +90,14 @@ def create_app(model: BaseLlm | None = None) -> FastAPI:
     @app.post("/sessoes/{session_id}/mensagens", response_model=RespostaTurno)
     async def enviar_mensagem(session_id: str, body: NovaMensagem, request: Request) -> dict:
         return await conversation(request).send_text(session_id, body.texto)
+
+    @app.post("/sessoes/{session_id}/confirmacoes", response_model=RespostaTurno)
+    async def responder_confirmacao(
+        session_id: str, body: RespostaConfirmacao, request: Request
+    ) -> dict:
+        return await conversation(request).answer_confirmation(
+            session_id, body.id, body.confirmado
+        )
 
     @app.get("/sessoes/{session_id}/eventos")
     async def listar_eventos(session_id: str, request: Request) -> list[dict]:
