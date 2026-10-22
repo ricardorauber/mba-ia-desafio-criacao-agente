@@ -16,12 +16,12 @@ Build the assistant as a coordinator agent plus three specialists, wired so that
 - R6: The session state key `apartamento` SHALL be used only for instruction templating; the tools keep reading the apartment from the session user id (spec 0003).
 
 ## Acceptance criteria
-- [ ] AC1: The agent tree is `coordenador` → sub_agents `reservas`, `visitantes`, tools include an `AgentTool` named `regulamento`. (R1, R2)
-- [ ] AC2: No 40-character window of `dados/regulamento.md` appears in any agent instruction or description, and the coordinator instruction does not mention article text. (R1)
-- [ ] AC3: `ler_capitulo(4)` returns the "Piscina" chapter containing "das 9h às 20h" and nothing from other chapters; `listar_capitulos()` returns 14 entries. (R3)
-- [ ] AC4: With the fake LLM, a question routed to `regulamento` leaves in the session only the `regulamento` function call and its response — no `ler_capitulo` event and no chapter text. (R3)
-- [ ] AC5: With the fake LLM and a persisted SQLite session, a fee reservation requested inside `reservas` pauses with an `adk_request_confirmation`, and approving it with a new `Runner` instance (simulated restart) executes `reservar_area` exactly once. (R1, R5)
-- [ ] AC6: `AURORA_MODEL` overrides the model name. (R4)
+- [x] AC1: The agent tree is `coordenador` → sub_agents `reservas`, `visitantes`, tools include an `AgentTool` named `regulamento`. (R1, R2)
+- [x] AC2: No 40-character window of `dados/regulamento.md` appears in any agent instruction or description, and the coordinator instruction does not mention article text. (R1)
+- [x] AC3: `ler_capitulo(4)` returns the "Piscina" chapter containing "das 9h às 20h" and nothing from other chapters; `listar_capitulos()` returns 14 entries. (R3)
+- [x] AC4: With the fake LLM, a question routed to `regulamento` leaves in the session only the `regulamento` function call and its response — no `ler_capitulo` event and no chapter text. (R3)
+- [x] AC5: With the fake LLM and a persisted SQLite session, a fee reservation requested inside `reservas` pauses with an `adk_request_confirmation`, and approving it with a new `Runner` instance (simulated restart) executes `reservar_area` exactly once. (R1, R5)
+- [x] AC6: `AURORA_MODEL` overrides the model name. (R4)
 
 ## Unit tests
 - T1: `tests/test_agents.py::test_tree_shape` (AC1).
