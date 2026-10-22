@@ -19,12 +19,12 @@ Expose the assistant through FastAPI with persisted ADK sessions, following the 
 - R9: `uv run aurora-api` SHALL load `.env` and serve on `127.0.0.1:8000` with a single worker.
 
 ## Acceptance criteria
-- [ ] AC1: `POST /sessoes` returns `201` and a `session_id`; `POST /sessoes` with an unknown apartment returns `422`. (R1)
-- [ ] AC2: With the fake LLM, a message returns `200` with the contract shape and the reply text. (R2)
-- [ ] AC3: A fee reservation leaves one item in `confirmacoes_pendentes` with `acao`, `detalhes.area` and `detalhes.data`. (R3)
-- [ ] AC4: `GET /sessoes/sessao-inexistente/eventos` and `POST /sessoes/sessao-inexistente/mensagens` return `404`. (R5)
-- [ ] AC5: After recreating the app over the same `var/` (restart), `GET /eventos` returns the same number of events and a new message returns `200` and increases it. (R4, R6)
-- [ ] AC6: A provider error raised by the model returns `503`. (R8)
+- [x] AC1: `POST /sessoes` returns `201` and a `session_id`; `POST /sessoes` with an unknown apartment returns `422`. (R1)
+- [x] AC2: With the fake LLM, a message returns `200` with the contract shape and the reply text. (R2)
+- [x] AC3: A fee reservation leaves one item in `confirmacoes_pendentes` with `acao`, `detalhes.area` and `detalhes.data`. (R3)
+- [x] AC4: `GET /sessoes/sessao-inexistente/eventos` and `POST /sessoes/sessao-inexistente/mensagens` return `404`. (R5)
+- [x] AC5: After recreating the app over the same `var/` (restart), `GET /eventos` returns the same number of events and a new message returns `200` and increases it. (R4, R6)
+- [x] AC6: A provider error raised by the model returns `503`. (R8)
 
 ## Unit tests
 - T1: `tests/test_api.py` with `httpx.ASGITransport` and the fake LLM (AC1-AC6), each test with its own `AURORA_DATA_DIR` under `tmp_path`.

@@ -1,10 +1,17 @@
 """Console entry points."""
 
-from aurora import storage
+import uvicorn
+from dotenv import load_dotenv
+
+from aurora import config, storage
+
+HOST = "127.0.0.1"
+PORT = 8000
 
 
 def run_api() -> None:
-    print("aurora-api: not implemented yet")
+    load_dotenv(config.ROOT_DIR / ".env")
+    uvicorn.run("aurora.api:create_app", factory=True, host=HOST, port=PORT, workers=1)
 
 
 def run_restore() -> None:
